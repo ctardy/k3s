@@ -301,3 +301,12 @@ func (crw *connReadWriteCloser) Close() (err error) {
 	crw.once.Do(func() { err = crw.conn.Close() })
 	return err
 }
+
+// CloseWrite half-closes the underlying connection when it supports it (e.g. *tls.Conn,
+// *net.TCPConn), so that Proxy can send EOF to the client and let it drain before closing.
+func (crw *connReadWriteCloser) CloseWrite() error {
+	if cw, ok := crw.conn.(interface{ CloseWrite() error }); ok {
+		return cw.CloseWrite()
+	}
+	return errors.ErrUnsupported
+}
